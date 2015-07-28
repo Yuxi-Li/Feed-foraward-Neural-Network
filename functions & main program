@@ -12,21 +12,18 @@ typedef struct {                   // structure of FNN
     int h;                         // the number of neurons in hidden layer (maximum number is 50)
     double v[IN_COUT][50];         // the weight between input layer and hidden layer 
     double w[50][OUT_COUT];        // the weight between hidden layer and output layer
-	  double bo[OUT_COUT];     // the bias of neurons in output layer
-   	double bh[50];             // the bias of neurons in hidden layer
-  	double a;                  // learnign rate
+    double bo[OUT_COUT];           // the bias of neurons in output layer
+    double bh[50];                 // the bias of neurons in hidden layer
+    double a;                      // learnign rate
     double b;                      // precision control parameter
     int LoopCout;                  // maximum number of loop
 } bp_nn;
 
 
 int InitBp(bp_nn *bp) {            // initialize FNN
-    
-    
-	int i,j;
+    int i,j;
 	
-	
-	printf("Input the number of neurons in hidden layer (maximum number is 50)£º\n");    
+    printf("Input the number of neurons in hidden layer (maximum number is 50)£º\n");    
     scanf("%d", &(*bp).h);
     
     printf("Input the learning rate£º\n");
