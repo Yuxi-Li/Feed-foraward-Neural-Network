@@ -1,0 +1,244 @@
+//#include <stdafx.h>
+#include <stdlib.h>
+#include <math.h>
+#include <stdio.h>
+#include <time.h>
+
+
+#define OUT_COUT 2     //  input dimenssion 
+#define IN_COUT  2     //  output dimension
+#define COUT     81    // the number of training data set 
+
+typedef struct {              // structure of FNN
+    int h;                    // the number of neurons in hidden layer (maximum number is 50)
+    double v[IN_COUT][50];    // the weight between input layer and hidden layer 
+    double w[50][OUT_COUT];   // the weight between hidden layer and output layer
+	  double bo[OUT_COUT];      // the bias of neurons in output layer
+   	double bh[50];            // the bias of neurons in hidden layer
+  	double a;                 // learnign rate
+    double b;                 // precision control parameter
+    int LoopCout;             // maximum number of loop
+} bp_nn;
+
+//double fnet(double net) { // activation function
+//	return (tanh(net));  } /*exp(net)-exp(-net))/(exp(net)+exp(-net)*/                                                 
+
+int InitBp(bp_nn *bp) { // initialize FNN
+    
+    
+	int i,j;
+	
+	
+	printf("Input the number of neurons in hidden layer (maximum number is 50)£º\n");    
+    scanf("%d", &(*bp).h);
+    
+    printf("Input the learning rate£º\n");
+    scanf("%lf", &(*bp).a);    
+
+    printf("Input the precision control parameter£º\n");
+    scanf("%lf", &(*bp).b);
+
+    printf("Maximum number of loop£º\n");
+    scanf("%d", &(*bp).LoopCout);
+
+
+    srand((unsigned)time(NULL));                             // generate random numbers for weight and bias : (-1,1)
+	                                                            /* srand(seed number); srand((unsigned)time(NULL))*/
+    for (i = 0; i < IN_COUT; i++)                            
+        for (j = 0; j < (*bp).h; j++)                        
+	 (*bp).v[i][j] = 2*(rand() / (double)(RAND_MAX))-1; 
+    for (i = 0; i < (*bp).h; i++) 
+        for (j = 0; j < OUT_COUT; j++)
+            (*bp).w[i][j] = 2*(rand() / (double)(RAND_MAX))-1;  
+	for (i= 0; i < (*bp).h; i++) 
+        (*bp).bh[i]= 2*(rand()/(double)(RAND_MAX))-1;
+	for (i = 0; i < OUT_COUT; i++)
+		(*bp).bo[i] = 2*(rand() / (double)(RAND_MAX))-1; 
+
+    return 1;
+}
+
+int TrainBp(bp_nn *bp, double x[COUT-1][IN_COUT], double y[COUT-1][OUT_COUT]) { // training FNN, input data is x[][], out put data is y[][].
+   /* double f = (*bp).b;*/                            // precision control parameter
+    double a = (*bp).a;                                // learning rate
+    int h = (*bp).h;                                   // the number of neurons in hidden layer (maximum number is 50)
+    double v[IN_COUT][50], w[50][OUT_COUT];            // matrix of weight
+	double bo[OUT_COUT];                                 // bias of output layer neurons
+    double bh[50];                                     // bias of hidden layer neurons
+	double ChgH[COUT-1][50],ChgO[COUT-1][OUT_COUT];      // matrix of the  delta i  of weight
+	double O1[COUT-1][50], O2[COUT-1][OUT_COUT];         // the activate stste of hidden layer and outputlayer
+    int LoopCout = (*bp).LoopCout;                     // maximum number of loop
+    int i, j, k, n;
+    double temp;
+	double e[COUT-1][OUT_COUT];                          //error 
+
+    for (i = 0; i < IN_COUT; i++)                      // copy the matrix of structure
+        for (j = 0; j < h; j++)
+            v[i][j] = (*bp).v[i][j]; 
+    for (i = 0; i < h; i++)
+        for (j = 0; j < OUT_COUT; j++)
+            w[i][j] = (*bp).w[i][j];
+	for (i=0; i<OUT_COUT; i++)
+	    bo[i]= (*bp).bo[i]; 
+	for (i=0;i<h;i++)
+		bh[i]=(*bp).bh[i];
+	//for (i=0;i<h;i++)
+	//	printf("²âÊÔÊý¾Ý£º%f\n",bh[i]);
+
+	for (i=0;i<COUT-1;i++)
+		for (j=0;j<OUT_COUT;j++)
+			e[i][j]=0;
+    
+                                                
+    for (n = 0; n < LoopCout; n++) {    // start traning form the first step
+         /*e = 0;*/
+
+        for (i= 0; i < COUT-1; i++) {           // for every set of input data
+
+            for (k= 0; k < h; k++) {          // calculate the internal state of hidden layer neurons 
+                temp = 0;
+                for (j = 0; j < IN_COUT; j++){
+                    temp = temp + x[i][j] * v[j][k];
+				}
+
+			    temp= temp+bh[k];            
+				O1[i][k] = tanh(temp);         // calculate the activate state of hidden layer neurons
+			}
+			        
+            for (k = 0; k < OUT_COUT; k++) { // calculate the internal state of output layer neurons
+                temp = 0;
+                for (j = 0; j < h; j++){
+                    temp = temp + O1[i][j] * w[j][k];
+				}
+
+                temp=temp + bo[k];
+                O2[i][k] = tanh(temp);         //calculate the activate state of output layer neurons
+            }
+
+            for (j = 0; j < OUT_COUT ; j++){   // calculate error
+                e[i][j] = e[i][j] + 1/2*(y[i][j] - O2[i][j]) * (y[i][j] - O2[i][j]);
+			}
+
+			
+			for (j = 0; j < OUT_COUT; j++){    // calculate the  delta i  weight between hidden layer and output layer
+				ChgO[i][j] =(1-O2[i][j]*O2[i][j]) * (y[i][j] - O2[i][j]); //   (1-O2[j]*O2[j])  
+			}
+  
+
+            
+			for (j = 0; j < h; j++) {         // calculate the  delta i  between input layer and hidden layer
+                temp = 0;
+                for (k = 0; k < OUT_COUT; k++) 
+						temp = temp +  w[j][k] * ChgO[i][k];
+				   
+				 ChgH[i][j] = (1-O1[i][j]*O1[i][j]) * temp;   // (1-O1(j)*O1[j])
+            }
+		}
+
+        for (j = 0; j < h; j++) {        // modify the weight between hidden layer and output layer
+			for (k=0; k<OUT_COUT; k++){	
+			   temp = 0;
+				for (i = 0; i < COUT-1; i++) 
+					temp = temp +  O1[i][j] * ChgO[i][k];
+				w[j][k] = w[j][k]- a * temp;
+			}	  
+		}
+
+        for (j = 0; j < IN_COUT; j++) {     // modify the weight between input layer and hidden layer
+				for (k = 0; k < h; k++) {
+					temp = 0;
+					for (i=0;i<COUT-1;i++)
+						temp = temp + x[i][j] * ChgH[i][k];
+					v[j][k] = v[j][k] - a * temp;
+				}  
+		}
+		for (j=0; j < h; j++){
+			temp = 0; 
+			for (i = 0; i < COUT-1; i++)        // modify the bias of hidden layer neurons
+				temp = temp + ChgH[i][j]; 
+			bh[j] = bh[j] - a * temp;
+		}
+		//modify the bias of output layer neurons
+	    for (k = 0; k < OUT_COUT; k++) {
+			temp=0;
+			for(i=0;i<COUT-1;i++)
+				temp = temp + ChgO[i][k];
+			bo[k]=bo[k]- a * temp;
+		}
+        /*if (n % 10 == 0)
+            printf("Îó²î : %f\n", e-1);  */    //print error after all steps
+} 
+	printf("×Ü¹²Ñ­»·´ÎÊý, the number of loop£º%d\n", n);
+    printf("µ÷ÕûºóµÄÒþ²ãÈ¨¾ØÕó, modified weight between input layer and hidden layer£º\n");
+    for (i = 0; i < IN_COUT; i++) {    
+        for (j = 0; j < h; j++)
+            printf("%f    ", v[i][j]);    
+        printf("\n");
+    }
+    printf("µ÷ÕûºóµÄÊä³ö²ãÈ¨¾ØÕó,  modified weight between input layer and hidden layer£º\n");
+    for (i = 0; i < h; i++) {
+        for (j = 0; j < OUT_COUT; j++)
+            printf("%f    ", w[i][j]);    
+        printf("\n");
+    }
+
+	for (j=0;j<COUT-1;j++)
+	     for (i=0;i<OUT_COUT;i++)
+		      printf("²âÊÔÊý¾Ý output£º\n",O2[j][i]);
+	
+	for (i = 0; i < IN_COUT; i++)             // change weight 
+        for (j = 0; j < h; j++)
+            (*bp).v[i][j] = v[i][j];
+    for (i = 0; i < h; i++)
+        for (j = 0; j < OUT_COUT; j++)
+            (*bp).w[i][j] = w[i][j];
+    for (i=0; i<OUT_COUT; i++)                // change bias
+		 (*bp).bo[i]=bo[i];
+	for (i=0; i<h; i++)                       // change bias
+		 (*bp).bh[i]=bh[i];
+	printf("bpÍøÂçÑµÁ·½áÊø£¡ FNN training is finished!\n");
+
+    return 1;
+}
+
+
+int main()
+{
+    int i, j, k, p;
+	double a[COUT][IN_COUT]={0};
+	double x[COUT-1][IN_COUT]={0};
+	double y[COUT-1][IN_COUT]={0};
+	bp_nn bp;
+	FILE *fp;
+
+	if ((fp=fopen("G:\\training data.txt","r"))==NULL)      //read training data
+	{
+		printf("cannot open the file\n");	
+	}
+
+	for (i=0; i<COUT; i++)
+	{
+		for (j=0; j<IN_COUT; j++)
+			fscanf(fp,"%lg",&a[i][j]);
+		fscanf(fp,"\n");
+	}
+
+	fclose (fp);
+	
+	for(i=0;i<COUT-1;i++)                            //Data normalization  (range from -0.8 to 0.8)
+		for(j=0;j<IN_COUT;j++)
+			x[i][j]=a[i][j]*4.0/30.0-2.0/3.0;
+		
+	for(i=1,k=0;i<COUT;i++,k++)
+		for(j=0,p=0;j<IN_COUT;j++,p++)
+		{
+			y[k][p]=a[i][j]*4.0/30.0-2.0/3.0;
+	        printf("target  : %f\n",y[k][p]);
+		}
+ 
+
+    InitBp(&bp);                  // initialize FNN
+    TrainBp(&bp,x,y);             // training FNN
+	scanf("\n");
+	return 0;
+} 
