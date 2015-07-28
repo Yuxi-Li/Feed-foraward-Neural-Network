@@ -1,4 +1,3 @@
-//#include <stdafx.h>
 #include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
@@ -9,21 +8,19 @@
 #define IN_COUT  2     //  output dimension
 #define COUT     81    // the number of training data set 
 
-typedef struct {              // structure of FNN
-    int h;                    // the number of neurons in hidden layer (maximum number is 50)
-    double v[IN_COUT][50];    // the weight between input layer and hidden layer 
-    double w[50][OUT_COUT];   // the weight between hidden layer and output layer
-	  double bo[OUT_COUT];      // the bias of neurons in output layer
-   	double bh[50];            // the bias of neurons in hidden layer
-  	double a;                 // learnign rate
-    double b;                 // precision control parameter
-    int LoopCout;             // maximum number of loop
+typedef struct {                   // structure of FNN
+    int h;                         // the number of neurons in hidden layer (maximum number is 50)
+    double v[IN_COUT][50];         // the weight between input layer and hidden layer 
+    double w[50][OUT_COUT];        // the weight between hidden layer and output layer
+	  double bo[OUT_COUT];     // the bias of neurons in output layer
+   	double bh[50];             // the bias of neurons in hidden layer
+  	double a;                  // learnign rate
+    double b;                      // precision control parameter
+    int LoopCout;                  // maximum number of loop
 } bp_nn;
 
-//double fnet(double net) { // activation function
-//	return (tanh(net));  } /*exp(net)-exp(-net))/(exp(net)+exp(-net)*/                                                 
 
-int InitBp(bp_nn *bp) { // initialize FNN
+int InitBp(bp_nn *bp) {            // initialize FNN
     
     
 	int i,j;
@@ -43,7 +40,7 @@ int InitBp(bp_nn *bp) { // initialize FNN
 
 
     srand((unsigned)time(NULL));                             // generate random numbers for weight and bias : (-1,1)
-	                                                            /* srand(seed number); srand((unsigned)time(NULL))*/
+	                                                     /* srand(seed number); srand((unsigned)time(NULL))*/
     for (i = 0; i < IN_COUT; i++)                            
         for (j = 0; j < (*bp).h; j++)                        
 	 (*bp).v[i][j] = 2*(rand() / (double)(RAND_MAX))-1; 
@@ -59,20 +56,20 @@ int InitBp(bp_nn *bp) { // initialize FNN
 }
 
 int TrainBp(bp_nn *bp, double x[COUT-1][IN_COUT], double y[COUT-1][OUT_COUT]) { // training FNN, input data is x[][], out put data is y[][].
-   /* double f = (*bp).b;*/                            // precision control parameter
-    double a = (*bp).a;                                // learning rate
-    int h = (*bp).h;                                   // the number of neurons in hidden layer (maximum number is 50)
-    double v[IN_COUT][50], w[50][OUT_COUT];            // matrix of weight
+   /* double f = (*bp).b;*/                                  // precision control parameter
+    double a = (*bp).a;                                      // learning rate
+    int h = (*bp).h;                                         // the number of neurons in hidden layer (maximum number is 50)
+    double v[IN_COUT][50], w[50][OUT_COUT];                  // matrix of weight
 	double bo[OUT_COUT];                                 // bias of output layer neurons
-    double bh[50];                                     // bias of hidden layer neurons
+    double bh[50];                                           // bias of hidden layer neurons
 	double ChgH[COUT-1][50],ChgO[COUT-1][OUT_COUT];      // matrix of the  delta i  of weight
 	double O1[COUT-1][50], O2[COUT-1][OUT_COUT];         // the activate stste of hidden layer and outputlayer
-    int LoopCout = (*bp).LoopCout;                     // maximum number of loop
+    int LoopCout = (*bp).LoopCout;                           // maximum number of loop
     int i, j, k, n;
     double temp;
 	double e[COUT-1][OUT_COUT];                          //error 
 
-    for (i = 0; i < IN_COUT; i++)                      // copy the matrix of structure
+    for (i = 0; i < IN_COUT; i++)                            // copy the matrix of structure
         for (j = 0; j < h; j++)
             v[i][j] = (*bp).v[i][j]; 
     for (i = 0; i < h; i++)
@@ -90,22 +87,22 @@ int TrainBp(bp_nn *bp, double x[COUT-1][IN_COUT], double y[COUT-1][OUT_COUT]) { 
 			e[i][j]=0;
     
                                                 
-    for (n = 0; n < LoopCout; n++) {    // start traning form the first step
+    for (n = 0; n < LoopCout; n++) {            // start traning form the first step
          /*e = 0;*/
 
         for (i= 0; i < COUT-1; i++) {           // for every set of input data
 
-            for (k= 0; k < h; k++) {          // calculate the internal state of hidden layer neurons 
+            for (k= 0; k < h; k++) {            // calculate the internal state of hidden layer neurons 
                 temp = 0;
                 for (j = 0; j < IN_COUT; j++){
                     temp = temp + x[i][j] * v[j][k];
 				}
 
 			    temp= temp+bh[k];            
-				O1[i][k] = tanh(temp);         // calculate the activate state of hidden layer neurons
+				O1[i][k] = tanh(temp);     // calculate the activate state of hidden layer neurons
 			}
 			        
-            for (k = 0; k < OUT_COUT; k++) { // calculate the internal state of output layer neurons
+            for (k = 0; k < OUT_COUT; k++) {               // calculate the internal state of output layer neurons
                 temp = 0;
                 for (j = 0; j < h; j++){
                     temp = temp + O1[i][j] * w[j][k];
